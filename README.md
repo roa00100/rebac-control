@@ -29,7 +29,7 @@ docker compose up --build
 ## 로컬 실행 (OpenFGA는 직접 띄운 경우)
 
 1. OpenFGA가 `application.yml`의 `openfga.api-url`(기본 `http://127.0.0.1:21010`)에서 동작하도록 준비합니다.
-2. 루트에서:
+2. 루트에서(Windows는 `gradlew.bat`):
 
 ```bash
 ./gradlew :rebac-engine:bootRun
