@@ -21,10 +21,18 @@ docker compose up --build
 ```
 
 - **rebac-engine** REST: `http://localhost:21001`
-- **OpenFGA** API: `http://localhost:21010`
-- Postgres(OpenFGA 전용): `localhost:21020`
+- **OpenFGA** HTTP API: `http://localhost:21010`, gRPC: `localhost:21011`
+- **MySQL**(OpenFGA 전용): `localhost:21020` (기본 루트 비밀번호는 compose 기본값·또는 루트 `.env`의 `MYSQL_ROOT_PASSWORD`; DB 이름은 `docker-compose.yml` 참고)
 
-컨테이너 환경에서는 `OPENFGA_API_URL=http://openfga:8080`으로 엔진이 OpenFGA에 붙습니다.
+`docker-compose.yml`의 OpenFGA 구간은 [공식 Docker 가이드(MySQL)](https://openfga.dev/docs/getting-started/setup-openfga/docker#using-mysql)와 같은 흐름입니다(MySQL 기동 → `migrate` → `openfga` 실행). `OPENFGA_DATASTORE_MAX_OPEN_CONNS`는 MySQL `max_connections`(200)보다 작게 두었습니다. Playground는 끈 채(`OPENFGA_PLAYGROUND_ENABLED=false`) 포트만 210xx로 매핑했습니다.
+
+컨테이너 네트워크 안에서는 `OPENFGA_API_URL=http://openfga:8080`으로 엔진이 OpenFGA HTTP에 붙습니다.
+
+### 재시작과 데이터
+
+- **`migrate`는 스키마용**입니다. DB가 이미 마이그레이션된 상태면 다시 실행돼도 일반적으로 튜플 같은 **업무 데이터를 비우지 않습니다**(버전에 맞는 스키마만 적용·유지).
+- **데이터가 사라질 수 있는 경우**는 주로 **볼륨을 지울 때**입니다. MySQL 데이터는 이름 붙은 볼륨 `openfga-mysql-data`에 있으므로, `docker compose down`만으로는 유지되고, **`docker compose down -v`** 또는 `docker volume rm …`처럼 **볼륨까지 제거**하면 초기화됩니다.
+- **운영 수준의 안정성**(백업, 복제, 장애 조치)은 이 compose가 목표로 하지 않습니다. 로컬·데모용이며, 상용은 [OpenFGA 운영 가이드](https://openfga.dev/docs/getting-started/running-in-production)와 DB 백업 전략을 따르는 것이 맞습니다.
 
 ## 로컬 실행 (OpenFGA는 직접 띄운 경우)
 

@@ -1,43 +1,64 @@
-# ReBAC 제어 엔진 + OpenFGA
+# OpenFGA 스택: MySQL 데이터스토어 + 마이그레이션 후 서버 기동 패턴
+# 참고: https://openfga.dev/docs/getting-started/setup-openfga/docker#using-mysql
 #
+# 호스트 포트(이 저장소):
 #   21001  rebac-engine REST
-#   21010  OpenFGA HTTP
+#   21010  OpenFGA HTTP API
+#   21011  OpenFGA gRPC
+#   21020  MySQL (OpenFGA 전용)
+#
+# 이미지 태그는 로컬 개발 편의를 위해 latest/8.0을 쓰며, 운영에서는 고정 버전을 권장합니다.
+#
+# MySQL 루트 비밀번호: 루트의 .env 에 MYSQL_ROOT_PASSWORD 를 두면 그 값이 mysql / migrate / openfga DSN 에 공통 적용됩니다.
+# 미설정 시 기본값은 아래 ${MYSQL_ROOT_PASSWORD:-...} 와 동일해야 합니다.
+
+x-openfga-datastore: &openfga-datastore
+  OPENFGA_DATASTORE_ENGINE: mysql
+  # DSN 형식: https://github.com/go-sql-driver/mysql#dsn-data-source-name
+  OPENFGA_DATASTORE_URI: root:${MYSQL_ROOT_PASSWORD:-rebac_openfga_local}@tcp(mysql:3306)/openfga?parseTime=true
 
 services:
-  postgres-fga:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8.0
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rebac_openfga_local}
+      MYSQL_DATABASE: openfga
     ports:
-      - "21020:5432"
+      - "21020:3306"
+    volumes:
+      - openfga-mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max_connections=200
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 3s
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" || exit 1"]
+      interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 30
+      start_period: 40s
 
-  openfga-migrate:
+  migrate:
     image: openfga/openfga:latest
     command: migrate
     environment:
-      OPENFGA_DATASTORE_ENGINE: postgres
-      OPENFGA_DATASTORE_URI: postgres://postgres:postgres@postgres-fga:5432/postgres?sslmode=disable
+      <<: *openfga-datastore
     depends_on:
-      postgres-fga:
+      mysql:
         condition: service_healthy
 
   openfga:
     image: openfga/openfga:latest
     command: run
     environment:
-      OPENFGA_DATASTORE_ENGINE: postgres
-      OPENFGA_DATASTORE_URI: postgres://postgres:postgres@postgres-fga:5432/postgres?sslmode=disable
+      <<: *openfga-datastore
+      OPENFGA_DATASTORE_MAX_OPEN_CONNS: "100"
       OPENFGA_PLAYGROUND_ENABLED: "false"
     ports:
       - "21010:8080"
+      - "21011:8081"
     depends_on:
-      openfga-migrate:
+      migrate:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=:8081"]
@@ -58,3 +79,6 @@ services:
     depends_on:
       openfga:
         condition: service_healthy
+
+volumes:
+  openfga-mysql-data:
