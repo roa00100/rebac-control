@@ -1,0 +1,60 @@
+# ReBAC 제어 엔진 + OpenFGA
+#
+#   21001  rebac-engine REST
+#   21010  OpenFGA HTTP
+
+services:
+  postgres-fga:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "21020:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  openfga-migrate:
+    image: openfga/openfga:latest
+    command: migrate
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://postgres:postgres@postgres-fga:5432/postgres?sslmode=disable
+    depends_on:
+      postgres-fga:
+        condition: service_healthy
+
+  openfga:
+    image: openfga/openfga:latest
+    command: run
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://postgres:postgres@postgres-fga:5432/postgres?sslmode=disable
+      OPENFGA_PLAYGROUND_ENABLED: "false"
+    ports:
+      - "21010:8080"
+    depends_on:
+      openfga-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=:8081"]
+      interval: 5s
+      timeout: 30s
+      retries: 12
+      start_period: 10s
+
+  rebac-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.rebac-engine
+    environment:
+      SERVER_PORT: "21001"
+      OPENFGA_API_URL: http://openfga:8080
+    ports:
+      - "21001:21001"
+    depends_on:
+      openfga:
+        condition: service_healthy

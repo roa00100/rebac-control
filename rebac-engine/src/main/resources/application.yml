@@ -1,0 +1,11 @@
+server:
+  port: ${SERVER_PORT:21001}
+
+spring:
+  application:
+    name: rebac-engine
+
+openfga:
+  enabled: true
+  api-url: ${OPENFGA_API_URL:http://127.0.0.1:21010}
+  store-name: ${OPENFGA_STORE_NAME:rebac-engine-store}
