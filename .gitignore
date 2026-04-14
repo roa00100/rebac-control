@@ -1,6 +1,23 @@
+# Gradle
 /.gradle/
 **/build/
-/.idea/
-/.vscode/
+
+# IDE
+**/.idea/
+**/.vscode/
 *.iml
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs / JVM
+*.log
+hs_err_pid*
+replay_pid*
+
+# Local overrides (secrets — 커밋 금지)
+**/application-local.yml
+**/application-local.properties
+.env
+.env.local
