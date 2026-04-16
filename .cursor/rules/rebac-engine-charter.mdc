@@ -1,0 +1,45 @@
+---
+description: rebac-control 프로젝트 지침 — ReBAC 엔진 역할, 모듈 경계, 로드맵·SPI 준수 (항상 적용)
+alwaysApply: true
+---
+
+# rebac-control 프로젝트 지침 (필수)
+
+에이전트는 이 저장소에서 작업할 때 **아래를 반드시 준수**한다. 세부 기능·우선순위·Phase는 **`docs/ENGINE-ROADMAP.md`** 를 단일 출처로 삼는다.
+
+## 1. 제품 정체성
+
+- 이 저장소는 **Zanzibar/ReBAC 스타일 관계**를 REST로 다루는 **제어 엔진(rebac-control)** 이다.
+- 엔진은 시스템 권한의 **얕은 연결(shallow coupling) PDP**에 가깝다: 호출자는 `user` / `relation` / `object` 규약과 공개 API만 알고, 스토어·모델 전개·백엔드 한도는 **엔진·어댑터 뒤**에 둔다.
+- **비즈니스 규칙 전부·UI/PEP 최종 차단·도메인 트랜잭션**을 엔진에 몰아넣지 않는다. 튜플 동기화는 가능하면 **이벤트/배치 파이프라인**과 경계를 나눈다.
+
+## 2. 모듈 경계 (위반 금지)
+
+| 모듈 | 역할 |
+|------|------|
+| **rebac-core** | `RelationshipTuple`, `RelationshipCheckQuery`, **`RebacEngine` SPI**, `RebacService` — 프레임워크 비의존 유지. |
+| **rebac-openfga-adapter** | `RebacEngine` 의 OpenFGA 구현·Spring 자동구성. OpenFGA API/SDK 제약(예: read `pageSize` 상한)을 여기서 흡수한다. |
+| **rebac-engine** | HTTP 어댑터(`RelationshipRestController` 등), 애플리케이션 조립. 도메인 규칙은 **core/service** 로만 흐르게 한다. |
+
+- 데모 앱 **`tenant-rebac-demo` 는 제거된 상태**다. 새 데모는 별 저장소/모듈로 두고, 본 엔진은 **범용 PDP 코어**만 유지한다.
+
+## 3. 로드맵·이슈 연동
+
+- 새 API·SPI·운영 기능은 **`docs/ENGINE-ROADMAP.md` 의 Feature ID(F-01 …)** 에 맞춰 이슈·PR 제목에 ID를 붙인다.
+- 로드맵에 없는 큰 방향 전환을 하려면 **로드맵 문서를 먼저 갱신**한 뒤 구현한다.
+- **F-26(Fail-closed·장애 시 호출자 계약)**, **F-17(입력 검증)** 은 보안·데이터 오염 방지를 위해 **후순위로 미루지 않는 것을 원칙**으로 한다(로드맵 Phase 1 참고).
+
+## 4. 구현 시 공통 원칙
+
+- Java 패키지·Gradle `group` 은 **`com.rebac`** 계열을 유지한다 (`com.example` 사용 금지).
+- `replace` 모드·빈 튜플 목록·OpenFGA read 페이지 크기 등 **이미 정리된 백엔드 제약**을 깨지 않는다; 의심되면 어댑터와 REST 검증을 함께 본다.
+- `RebacEngine` 에 메서드를 추가할 때는 **비대화**를 피하기 위해 로드맵 **F-31(역할별 포트 분리)** 를 검토한다.
+- OpenFGA가 아닌 다른 `RebacEngine` 구현을 염두에 둘 때, **ListObjects / Expand / consistency** 등은 **지원 매트릭스**를 문서에 명시한다.
+- 엔진 **Check 캐시(F-23)** 는 PEP·BFF 캐시와 **이중 stale** 이 나지 않도록; 기본은 보수적이거나 문서화된 계약 하에서만 도입한다.
+
+## 5. API·운영
+
+- 공개 HTTP 경로는 **`/api/v1`** 하위를 유지하고, breaking 변경 시 로드맵 **F-16** 에 맞춘 버전 정책을 따른다.
+- 인증·상관 ID·관측·readiness 는 로드맵 Phase 1~2와 정렬한다.
+
+작업 요약 시 사용자 규칙에 따라 **한국어**로 보고한다.
