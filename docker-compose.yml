@@ -70,10 +70,11 @@ services:
   rebac-engine:
     build:
       context: .
-      dockerfile: Dockerfile.rebac-engine
+      dockerfile: rebac-engine/Dockerfile
     environment:
       SERVER_PORT: "21001"
       OPENFGA_API_URL: http://openfga:8080
+      OPENFGA_WRITE_DEFAULT_AUTHORIZATION_MODEL: "true"
     ports:
       - "21001:21001"
     depends_on:

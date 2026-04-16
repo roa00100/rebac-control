@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "rebac-control"
 
-include("rebac-core", "rebac-openfga", "rebac-engine")
+include("rebac-core", "rebac-openfga-adapter", "rebac-engine")

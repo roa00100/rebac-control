@@ -1,0 +1,95 @@
+{
+  "info": {
+    "name": "rebac-control",
+    "description": "rebac-engine REST (`/api/v1`). 로컬은 루트 `docker compose up` 후 `rebac_engine_base` 기본값 사용.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "rebac_engine_base", "value": "http://localhost:21001" }],
+  "item": [
+    {
+      "name": "rebac-engine",
+      "description": "OpenFGA 백엔드에 연결된 rebac-engine. 인증 없음.",
+      "item": [
+        {
+          "name": "Meta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{rebac_engine_base}}/api/v1/meta"
+          }
+        },
+        {
+          "name": "List tuples",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{rebac_engine_base}}/api/v1/tuples"
+          }
+        },
+        {
+          "name": "Ingest tuples (append)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"append\",\n  \"tuples\": [\n    {\n      \"user\": \"user:postman-test\",\n      \"relation\": \"viewer\",\n      \"object\": \"document:postman-doc\"\n    }\n  ]\n}"
+            },
+            "url": "{{rebac_engine_base}}/api/v1/tuples"
+          }
+        },
+        {
+          "name": "Ingest tuples (replace)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"replace\",\n  \"tuples\": [\n    {\n      \"user\": \"user:alice\",\n      \"relation\": \"owner\",\n      \"object\": \"document:demo-only\"\n    }\n  ]\n}"
+            },
+            "url": "{{rebac_engine_base}}/api/v1/tuples"
+          },
+          "description": "`replace` 는 스토어 튜플 전부 삭제 후 적재합니다. 로컬 데이터가 필요하면 주의해서 사용하세요."
+        },
+        {
+          "name": "Ingest tuples (replace, empty = clear)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"replace\",\n  \"tuples\": []\n}"
+            },
+            "url": "{{rebac_engine_base}}/api/v1/tuples"
+          },
+          "description": "빈 목록이면 스토어 튜플만 비웁니다."
+        },
+        {
+          "name": "Check (viewer)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": \"user:postman-test\",\n  \"relation\": \"viewer\",\n  \"object\": \"document:postman-doc\"\n}"
+            },
+            "url": "{{rebac_engine_base}}/api/v1/check"
+          }
+        },
+        {
+          "name": "Check (owner / 기본 모델)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": \"user:alice\",\n  \"relation\": \"viewer\",\n  \"object\": \"document:demo-only\"\n}"
+            },
+            "url": "{{rebac_engine_base}}/api/v1/check"
+          },
+          "description": "기본 OpenFGA 모델(document owner/viewer) 기준 예시입니다."
+        }
+      ]
+    }
+  ]
+}

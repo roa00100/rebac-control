@@ -16,7 +16,7 @@ tasks.withType<Test> {
 
 dependencies {
     implementation(project(":rebac-core"))
-    implementation(project(":rebac-openfga"))
+    implementation(project(":rebac-openfga-adapter"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

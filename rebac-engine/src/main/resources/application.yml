@@ -9,3 +9,5 @@ openfga:
   enabled: true
   api-url: ${OPENFGA_API_URL:http://127.0.0.1:21010}
   store-name: ${OPENFGA_STORE_NAME:rebac-engine-store}
+  # OpenFGA에 이미 인가 모델을 다른 경로로 적재한 경우 false 로 기본 document/user 모델 작성 생략
+  write-default-authorization-model: ${OPENFGA_WRITE_DEFAULT_AUTHORIZATION_MODEL:true}

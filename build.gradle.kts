@@ -4,6 +4,6 @@ plugins {
 }
 
 allprojects {
-    group = "com.example.rebac"
+    group = "com.rebac"
     version = "0.0.1-SNAPSHOT"
 }
